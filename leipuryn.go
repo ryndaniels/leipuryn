@@ -9,23 +9,26 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
+	"time"
 )
 
 const (
 	// LatestImageURL is where to download the latest raspbian image from, if one isn't provided locally
-	latestImageURL = "https://downloads.raspberrypi.org/raspbian_lite_latest"
+	latestImageURL = "https://downloads.raspberrypi.org/rpd_x86_latest"
 )
 const (
 	// LatestImageSHA is from raspberrypi.org
-	latestImageSHA = "47ef1b2501d0e5002675a50b6868074e693f78829822eef64f3878487953234d"
+	latestImageSHA = "0148f4b5da4b9c82c731107e4a29e645445d715db8b070609df3c6689df0c8d1"
 )
 
 func main() {
 	fmt.Println("welcome to leipuryn")
 
 	imageURL := flag.String("url", "", "url to the raspbian image to download")
-	imagePath := flag.String("path", "", "full path to local raspbian image to use")
+	imagePath := flag.String("path", "", "path to local raspbian image to use")
 	flag.Parse()
 
 	if *imageURL != "" && *imagePath != "" {
@@ -37,13 +40,77 @@ func main() {
 		*imagePath = downloadImage(*imageURL)
 	}
 
-	unzip(*imagePath, ".")
-	// image is now named SOMETHING like "2018-11-13-raspbian-stretch-lite.img"
-	// the most recently downloaded image will be `ls -t *.img | head -n1`
+	if filepath.Ext(*imagePath) == ".zip" {
+		fmt.Printf("Unzipping %s...\n", *imagePath)
+		unzip(*imagePath, ".")
+		fmt.Println("As discussed, we're ignoring these and working on ISOs for now, exiting...")
+		os.Exit(1)
+	} else if filepath.Ext(*imagePath) == ".iso" {
+		vdiPath := convertToVDI(*imagePath)
+		vmName := "Leipuryn Build VM"
+		createVM(vmName, vdiPath)
 
-	//fmt.Printf("Creating new image from base image at %s\n", *imagePath)
-	// TODO: Next up: create a virtualbox for this
+		// TODO get bash script onto VM
+		// TODO write said bash script
 
+		cleanUpVM(vmName)
+	} else {
+		fmt.Printf("Unexpected file format for %s (expecting .iso or .zip), exiting...\n", *imagePath)
+		os.Exit(2)
+	}
+
+}
+
+func runVboxCommand(command ...string) {
+	VBM := "VBoxManage"
+	if p := os.Getenv("VBOX_INSTALL_PATH"); p != "" && runtime.GOOS == "windows" {
+		VBM = filepath.Join(p, "VBoxManage.exe")
+	}
+	cmd := exec.Command(VBM, command...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	checkError(err)
+}
+
+func convertToVDI(imagePath string) string {
+	baseName := imagePath[0 : len(imagePath)-len(filepath.Ext(imagePath))]
+	vdiPath := baseName + ".vdi"
+
+	if _, err := os.Stat(vdiPath); !os.IsNotExist(err) {
+		fmt.Printf("VDI file %s already exists, not overwriting...\n", vdiPath)
+	} else {
+		fmt.Printf("Using vboxmanage to convert from %s to %s\n", imagePath, vdiPath)
+		runVboxCommand("convertfromraw", imagePath, vdiPath)
+	}
+	return vdiPath
+}
+
+func createVM(vmName, vdiPath string) {
+	fmt.Printf("Creating a vm named %s from image %s\n", vmName, vdiPath)
+
+	// TODO somewhere in here, mount a shared folder with Le Bash Script
+	// vboxmanage sharedfolder add "io" --name share-name --hostpath /path/to/folder/ --automount
+
+	controllerName := "SATA Controller"
+	runVboxCommand("createvm", "--name", vmName, "--ostype", "Debian_64", "--register")
+	runVboxCommand("modifyvm", vmName, "--cpus", "1", "--memory", "1024", "--vram", "16")
+
+	runVboxCommand("storagectl", vmName, "--name", "IDE", "--add", "ide", "--bootable", "on")
+	runVboxCommand("storagectl", vmName, "--name", controllerName, "--add", "sata", "--bootable", "on")
+	runVboxCommand("storageattach", vmName, "--storagectl", controllerName, "--port", "1", "--device", "0", "--type", "hdd", "--medium", vdiPath)
+
+	runVboxCommand("startvm", vmName)
+	fmt.Println("VM started, PRETENDING to do stuff here lalala")
+	time.Sleep(60 * time.Second)
+}
+
+func cleanUpVM(vmName string) {
+	// TODO currently getting: error: Cannot unregister the machine 'Leipuryn Build VM' while it is locked
+	fmt.Println("powering off vm")
+	runVboxCommand("controlvm", vmName, "poweroff")
+	fmt.Printf("Unregistering and deleting VM %s\n", vmName)
+	runVboxCommand("unregistervm", vmName, "--delete")
 }
 
 func downloadImage(imageURL string) string {
@@ -51,9 +118,10 @@ func downloadImage(imageURL string) string {
 		imageURL = latestImageURL
 	}
 
-	filePath := "raw_pi_dough.zip"
+	// TODO this could be a zip or an iso
+	filePath := "raw_pi_dough.iso"
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
-		fmt.Printf("File %s already exists, not overwriting!\n", filePath)
+		fmt.Printf("File %s already exists, not overwriting...\n", filePath)
 	} else {
 		out, err := os.Create(filePath)
 		defer out.Close()
