@@ -1,8 +1,13 @@
 ## Leipuryn
 
-Leipuryn `(/'laɪ̯purin/)` bakes images for Raspberry Pis.
+Leipuryn `(/'laɪ̯purin/)` bakes images for Raspberry Pis. It is currently **VERY MUCH A WORK IN PROGRESS**
+and just changes wildly all the time.
 
 This `README` will get better over time, I promise.
+
+### Why?
+
+If you have to ask, you probably aren't one of the two people who cares about this project.
 
 ### Building Leipuryn
 
@@ -15,7 +20,3 @@ building a windows exe from an osx box, you can use env vars: `env GOOS=windows 
 run with no arguments: `./leipuryn`
 * To build an image downloaded from a different url: `./leipuryn -url [YOUR_URL]`
 * To build an image based on an image you already have locally: `./leipuryn -path [FULL_PATH_TO_IMG_FILE]`
-
-### Why?
-
-If you have to ask, you probably aren't one of the two people who cares about this project.

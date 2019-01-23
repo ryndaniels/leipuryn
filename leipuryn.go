@@ -2,16 +2,19 @@ package main
 
 import (
 	"archive/zip"
+	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -29,6 +32,7 @@ func main() {
 
 	imageURL := flag.String("url", "", "url to the raspbian image to download")
 	imagePath := flag.String("path", "", "path to local raspbian image to use")
+	useVbox := flag.Bool("vbox", false, "create a local VM from downloaded image using virtualbox")
 	flag.Parse()
 
 	if *imageURL != "" && *imagePath != "" {
@@ -46,14 +50,21 @@ func main() {
 		fmt.Println("As discussed, we're ignoring these and working on ISOs for now, exiting...")
 		os.Exit(1)
 	} else if filepath.Ext(*imagePath) == ".iso" {
-		vdiPath := convertToVDI(*imagePath)
-		vmName := "Leipuryn Build VM"
-		createVM(vmName, vdiPath)
+		if *useVbox == true {
+			vdiPath := convertToVDI(*imagePath)
+			vmName := "Leipuryn Build VM"
+			createVM(vmName, vdiPath)
+			cleanUpVM(vmName)
+		} else {
+			// This is the default, and probably what we're doing going forward -
+			// putting the flag in to avoid deleting this *yet*
+			if runtime.GOOS == "linux" {
+				fmt.Println("Going to mount the iso...")
+			} else if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+				fmt.Printf("Mounting locally not supported on %s, exiting...\n", runtime.GOOS)
+			}
+		}
 
-		// TODO get bash script onto VM
-		// TODO write said bash script
-
-		cleanUpVM(vmName)
 	} else {
 		fmt.Printf("Unexpected file format for %s (expecting .iso or .zip), exiting...\n", *imagePath)
 		os.Exit(2)
@@ -88,10 +99,6 @@ func convertToVDI(imagePath string) string {
 
 func createVM(vmName, vdiPath string) {
 	fmt.Printf("Creating a vm named %s from image %s\n", vmName, vdiPath)
-
-	// TODO somewhere in here, mount a shared folder with Le Bash Script
-	// vboxmanage sharedfolder add "io" --name share-name --hostpath /path/to/folder/ --automount
-
 	controllerName := "SATA Controller"
 	runVboxCommand("createvm", "--name", vmName, "--ostype", "Debian_64", "--register")
 	runVboxCommand("modifyvm", vmName, "--cpus", "1", "--memory", "1024", "--vram", "16")
@@ -101,16 +108,24 @@ func createVM(vmName, vdiPath string) {
 	runVboxCommand("storageattach", vmName, "--storagectl", controllerName, "--port", "1", "--device", "0", "--type", "hdd", "--medium", vdiPath)
 
 	runVboxCommand("startvm", vmName)
-	fmt.Println("VM started, PRETENDING to do stuff here lalala")
-	time.Sleep(60 * time.Second)
+	fmt.Printf("VM %s started...", vmName)
+	time.Sleep(30 * time.Second)
 }
 
 func cleanUpVM(vmName string) {
-	// TODO currently getting: error: Cannot unregister the machine 'Leipuryn Build VM' while it is locked
-	fmt.Println("powering off vm")
-	runVboxCommand("controlvm", vmName, "poweroff")
-	fmt.Printf("Unregistering and deleting VM %s\n", vmName)
-	runVboxCommand("unregistervm", vmName, "--delete")
+	conf := askForConfirmation("When you're ready to power off the VM, enter y.")
+	if conf {
+
+		fmt.Printf("Powering off VM %s\n...", vmName)
+		runVboxCommand("controlvm", vmName, "poweroff")
+		time.Sleep(15 * time.Second) // Make sure the poweroff completes so we don't get errors about it being locked
+		fmt.Printf("Unregistering and deleting VM %s\n", vmName)
+		runVboxCommand("unregistervm", vmName, "--delete")
+	} else {
+		fmt.Println("Ok, I'll wait...")
+		time.Sleep(10 * time.Second)
+		cleanUpVM(vmName)
+	}
 }
 
 func downloadImage(imageURL string) string {
@@ -154,6 +169,28 @@ func downloadImage(imageURL string) string {
 func checkError(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+// Thanks to https://gist.github.com/r0l1/3dcbb0c8f6cfe9c66ab8008f55f8f28b
+func askForConfirmation(s string) bool {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Printf("%s [y/n]: ", s)
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		if response == "y" || response == "yes" {
+			return true
+		} else if response == "n" || response == "no" {
+			return false
+		}
 	}
 }
 
