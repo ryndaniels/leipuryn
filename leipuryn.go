@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -143,11 +142,17 @@ func downloadImage(imageURL string) string {
 		checkError(err)
 
 		fmt.Printf("Downloading file from %s to %s, this could take a while...\n", imageURL, filePath)
-		response, err := http.Get(imageURL)
+
+		cmd := exec.Command("curl", "-#", "-o", filePath, "-L", imageURL)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
 		checkError(err)
-		defer response.Body.Close()
-		_, err = io.Copy(out, response.Body)
-		checkError(err)
+
+		//checkError(err)
+		//defer response.Body.Close()
+		//_, err = io.Copy(out, response.Body)
+		//checkError(err)
 	}
 
 	hasher := sha256.New()
