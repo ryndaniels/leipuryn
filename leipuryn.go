@@ -149,10 +149,6 @@ func downloadImage(imageURL string) string {
 		err = cmd.Run()
 		checkError(err)
 
-		//checkError(err)
-		//defer response.Body.Close()
-		//_, err = io.Copy(out, response.Body)
-		//checkError(err)
 	}
 
 	hasher := sha256.New()
