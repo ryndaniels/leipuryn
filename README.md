@@ -16,7 +16,7 @@ Leipuryn consists of two parts:
 * `leipuryn.go`, which downloads and unzips the latest lite raspbian image, and
 * `raparperyn.sh`, which mounts the image, makes the desired modifications to it, and then creates a new ISO to be uploaded.
 
-Yes, I realize that `leipuryn` could be replaces with a few lines of bash. That wasn't the point here.
+Yes, I realize that `leipuryn` could be replaced with a few lines of bash. That wasn't the point here.
 
 ### Running Leipuryn
 
