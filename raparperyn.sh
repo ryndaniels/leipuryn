@@ -4,17 +4,14 @@ set -e
 # First, find the most recent .img file
 IMG_PATH="$(ls -lr *.img | head -n 1 | awk '{ print $9 }')"
 
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-  OFFSET="$(fdisk -l $IMG_PATH | grep img2 | awk '{ print $2 }')"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  OFFSET="$(fdisk $IMG_PATH | grep files | awk '{ print $11 }')"
-fi
+OFFSET="$(fdisk -l $IMG_PATH | grep img2 | awk '{ print $2 }')"
+SECTOR_SIZE="$(fdisk -l $IMG_PATH | grep Sector | awk '{ print $4 }')"
+NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
 
-echo "Going to mount $IMG_PATH with offset $OFFSET"
-
+echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 mkdir -p /tmp/rawpi
-echo "mount -o loop,offset=$OFFSET $IMG_PATH /tmp/rawpi"
-mount -o loop,offset=$OFFSET $IMG_PATH /tmp/rawpi # it's RO now
+echo "mount -o loop,offset=$NEW_OFFSET $IMG_PATH /tmp/rawpi"
+mount -o loop,offset=$NEW_OFFSET $IMG_PATH /tmp/rawpi # it's RO now
 mkdir -p /tmp/newpi
 tar cf - /tmp/rawpi | (cd /tmp/newpi; sudo tar xfp -)
 # the filesystem in the iso is now RW at /tmp/newpi/tmp/rawpi
