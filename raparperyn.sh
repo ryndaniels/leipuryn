@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 set -e
 
-# First, find the most recent .img file
+# First, find the most recent .img file, then find the offset.
 IMG_PATH="$(ls -lr *.img | head -n 1 | awk '{ print $9 }')"
-
 OFFSET="$(fdisk -l $IMG_PATH | grep img2 | awk '{ print $2 }')"
 SECTOR_SIZE="$(fdisk -l $IMG_PATH | grep Sector | awk '{ print $4 }')"
 NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
 
 echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 mkdir -p $HOME/rawpi
-echo "mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi"
 mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
 mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
-# the filesystem in the iso is now RW at /$HOME/rawpi/newpi
+# the filesystem in the iso is now RW at /$HOME/newpi/rawpi
 # it is also all owned by root. it is unclear if it was that way in the img or if that's an artifact of having to be root to mount it.
 
 echo "DOING THE FILE STUFF"
-cd $HOME/rawpi/newpi
+ll $HOME/newpi
+sudo cd $HOME/newpi/rawpi
 sudo mkdir isolinux
 echo "copying the isolinux file"
 sudo cp /usr/lib/syslinux/isolinux.bin isolinux
