@@ -23,8 +23,11 @@ echo "cats are amazing" > ./etc/motd
 # TODO
 # probs gonna have a really bad for loop here
 
+cd $HOME
+echo "doing me an ls"
+ls -al | head -n 3
 echo "Done with that, baking the iso now"
-mkisofs -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" /tmp/newpi/tmp/rawpi .
+sudo mkisofs -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" /tmp/newpi/tmp/rawpi
 
 echo "did a thing"
 file $HOME/bakedpi.iso
