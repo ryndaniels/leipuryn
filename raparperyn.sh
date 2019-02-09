@@ -16,7 +16,7 @@ sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
 # it is also all owned by root. it is unclear if it was that way in the img or if that's an artifact of having to be root to mount it.
 
 echo "DOING THE FILE STUFF"
-ll $HOME/newpi
+ls $HOME/newpi
 sudo cd $HOME/newpi/rawpi
 sudo mkdir isolinux
 echo "copying the isolinux file"
