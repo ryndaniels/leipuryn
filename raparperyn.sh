@@ -13,6 +13,7 @@ fi
 echo "Going to mount $IMG_PATH with offset $OFFSET"
 
 mkdir -p /tmp/rawpi
+echo "mount -o loop,offset=$OFFSET $IMG_PATH /tmp/rawpi"
 mount -o loop,offset=$OFFSET $IMG_PATH /tmp/rawpi # it's RO now
 mkdir -p /tmp/newpi
 tar cf - /tmp/rawpi | (cd /tmp/newpi; sudo tar xfp -)
