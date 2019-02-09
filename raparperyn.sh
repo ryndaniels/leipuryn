@@ -19,7 +19,7 @@ tar cf - /tmp/rawpi | (cd /tmp/newpi; sudo tar xfp -)
 echo "DOING THE FILE STUFF"
 mkdir ./etc
 cd /tmp/newpi/tmp/rawpi
-cat "cats are amazing" > ./etc/motd
+echo "cats are amazing" > ./etc/motd
 # TODO
 # probs gonna have a really bad for loop here
 
