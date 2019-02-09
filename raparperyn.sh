@@ -9,25 +9,28 @@ SECTOR_SIZE="$(fdisk -l $IMG_PATH | grep Sector | awk '{ print $4 }')"
 NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
 
 echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
-mkdir -p /tmp/rawpi
-echo "mount -o loop,offset=$NEW_OFFSET $IMG_PATH /tmp/rawpi"
-mount -o loop,offset=$NEW_OFFSET $IMG_PATH /tmp/rawpi # it's RO now
-mkdir -p /tmp/newpi
-tar cf - /tmp/rawpi | (cd /tmp/newpi; sudo tar xfp -)
+mkdir -p $HOME/rawpi
+echo "mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi"
+mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
+mkdir -p $HOME/newpi
+sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
 # the filesystem in the iso is now RW at /tmp/newpi/tmp/rawpi
+# it is also all owned by root. it is unclear if it was that way in the img or if that's an artifact of having to be root to mount it.
 
 echo "DOING THE FILE STUFF"
-mkdir ./etc
-cd /tmp/newpi/tmp/rawpi
-echo "cats are amazing" > ./etc/motd
+cd $HOME/newpi/rawpi
+sudo mkdir isolinux
+sudo cp /usr/lib/syslinux/isolinux.bin isolinux
+sudo mkdir ./etc
+sudo echo "cats are amazing" > ./etc/motd
+
 # TODO
 # probs gonna have a really bad for loop here
 
-cd $HOME
 echo "doing me an ls"
 ls -al | head -n 3
 echo "Done with that, baking the iso now"
-sudo mkisofs -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" /tmp/newpi/tmp/rawpi
+sudo mkisofs -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
 
 echo "did a thing"
 file $HOME/bakedpi.iso
