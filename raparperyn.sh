@@ -14,17 +14,21 @@ echo "mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi"
 mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
 mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
-# the filesystem in the iso is now RW at /tmp/newpi/tmp/rawpi
+# the filesystem in the iso is now RW at /$HOME/newpi/rawpi
 # it is also all owned by root. it is unclear if it was that way in the img or if that's an artifact of having to be root to mount it.
 
 echo "DOING THE FILE STUFF"
 cd $HOME/newpi/rawpi
 sudo mkdir isolinux
+echo "copying the isolinux file"
 sudo cp /usr/lib/syslinux/isolinux.bin isolinux
-sudo mkdir ./etc
+echo "talking about cats erryday"
+sudo rm ./etc/motd
 sudo echo "cats are amazing" > ./etc/motd
 
-# TODO
+# TODO - the real files
+echo "ls the real shit"
+ls $HOME
 # probs gonna have a really bad for loop here
 
 echo "doing me an ls"
