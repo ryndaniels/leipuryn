@@ -12,27 +12,54 @@ mkdir -p $HOME/rawpi
 mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
 mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
-# the filesystem in the iso is now RW at /$HOME/newpi/rawpi
+# The filesystem in the iso is now RW at /$HOME/newpi/rawpi
 
 # This is necessary to get the mkisofs command to work
+# TODO use $NEWPATH here eventually
 cd $HOME/newpi/home/travis/rawpi
 sudo mkdir isolinux
 sudo cp /usr/lib/syslinux/isolinux.bin isolinux
 
+# TODO remove this once the real stuff is working
 echo "DOING THE FILE STUFF"
 echo "talking about cats erryday"
 sudo rm ./etc/motd
 sudo echo "cats are amazing" > ./etc/motd
 
-# TODO - the real files
-echo "WHEE"
-pwd
-echo "YEY"
-sudo find / -name ryngredients
-# probs gonna have a really bad for loop here
+# Copy all the files from ryngredients
+OLDPATH="$HOME/build/ryndaniels/ryngredients"
+NEWPATH="$HOME/newpi/$HOME/rawpi"
+
+# TODO this hasn't been tested yet because of Computers
+function fix_perms {
+  printf 'would fix perms of %s to match %s\n' "$2" "$1"
+  # old file is $1, new file is $2
+  OWNER=$(stat -c '%U' $1)
+  GROUP=$(stat -c '%G' $1)
+  PERMS=$(stat -c '%a' $1)
+  printf 'new file %s should have owner %s group %s perms %s\n' "$2" "$OWNER" "$GROUP" "$PERMS"
+  chown $OWNER:$GROUP $2
+  chmod $PERMS $2
+}
+
+while IFS= read -d $'\0' -r FILE ; do
+  if [[ -d $FILE ]]; then
+    printf 'Directory found: %s\n' "$FILE"
+    NEWDIR=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
+    printf 'would create new directory: %s\n' "$NEWDIR"
+    mkdir -p $NEWDIR
+    fix_perms $FILE $NEWDIR
+  elif [[ -f $FILE ]]; then
+    printf 'File found: %s\n' "$FILE"
+    NEWFILE=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
+    printf 'would copy file from %s to %s\n' "$FILE" "$NEWFILE"
+    cp $FILE $NEWFILE
+    # need to get owner of old file, otherwise it'll be all root and that's bad
+    fix_perms $FILE $NEWFILE
+  fi
+done < <(find $OLDPATH/* -print0)
 
 echo "Baking the iso now..."
 sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
 
-echo "did a thing"
-file $HOME/bakedpi.iso
+echo "Baked some pi successfully!"
