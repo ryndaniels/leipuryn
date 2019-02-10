@@ -32,7 +32,7 @@ ls $HOME
 echo "doing me an ls"
 ls -al | head -n 3
 echo "Done with that, baking the iso now"
-sudo mkisofs -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
+sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
 
 echo "did a thing"
 file $HOME/bakedpi.iso
