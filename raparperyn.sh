@@ -13,25 +13,25 @@ mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
 mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
 # the filesystem in the iso is now RW at /$HOME/newpi/rawpi
-# it is also all owned by root. it is unclear if it was that way in the img or if that's an artifact of having to be root to mount it.
 
-echo "DOING THE FILE STUFF"
+# This is necessary to get the mkisofs command to work
 cd $HOME/newpi/home/travis/rawpi
 sudo mkdir isolinux
-echo "copying the isolinux file"
 sudo cp /usr/lib/syslinux/isolinux.bin isolinux
+
+echo "DOING THE FILE STUFF"
 echo "talking about cats erryday"
 sudo rm ./etc/motd
 sudo echo "cats are amazing" > ./etc/motd
 
 # TODO - the real files
-echo "ls the real shit"
-ls $HOME
+echo "WHEE"
+pwd
+echo "YEY"
+sudo find / -name ryngredients
 # probs gonna have a really bad for loop here
 
-echo "doing me an ls"
-ls -al | head -n 3
-echo "Done with that, baking the iso now"
+echo "Baking the iso now..."
 sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
 
 echo "did a thing"
