@@ -53,22 +53,23 @@ function fix_perms {
   chmod $PERMS $2
 }
 
-while IFS= read -d $'\0' -r FILE ; do
-  if [[ -d $FILE ]]; then
-    printf 'Directory found: %s\n' "$FILE"
-    NEWDIR=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
-    printf 'would create new directory: %s\n' "$NEWDIR"
-    mkdir -p $NEWDIR
-    fix_perms $FILE $NEWDIR
-  elif [[ -f $FILE ]]; then
-    printf 'File found: %s\n' "$FILE"
-    NEWFILE=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
-    printf 'would copy file from %s to %s\n' "$FILE" "$NEWFILE"
-    cp $FILE $NEWFILE
-    # need to get owner of old file, otherwise it'll be all root and that's bad
-    fix_perms $FILE $NEWFILE
-  fi
-done < <(find $OLDPATH/* -print0)
+# TODO tomorrow - error happening with the NEWDIR sed command
+# while IFS= read -d $'\0' -r FILE ; do
+#   if [[ -d $FILE ]]; then
+#     printf 'Directory found: %s\n' "$FILE"
+#     NEWDIR=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
+#     printf 'would create new directory: %s\n' "$NEWDIR"
+#     mkdir -p $NEWDIR
+#     fix_perms $FILE $NEWDIR
+#   elif [[ -f $FILE ]]; then
+#     printf 'File found: %s\n' "$FILE"
+#     NEWFILE=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
+#     printf 'would copy file from %s to %s\n' "$FILE" "$NEWFILE"
+#     cp $FILE $NEWFILE
+#     # need to get owner of old file, otherwise it'll be all root and that's bad
+#     fix_perms $FILE $NEWFILE
+#   fi
+# done < <(find $OLDPATH/* -print0)
 
 echo "Baking the iso now..."
 sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
