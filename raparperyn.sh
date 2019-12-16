@@ -17,7 +17,10 @@ mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/rawpi
 
-OLDPATH="$HOME/build/ryndaniels/ryngredients"
+RYNGREDIENTS_PATH="$(sudo find / -name ryngredients)"
+echo "Found ryngredients at $RYNGREDIENTS_PATH"
+
+OLDPATH="$RYNGREDIENTS_PATH"
 NEWPATH="$HOME/newpi/$USER/rawpi"
 
 # This is necessary to get the mkisofs command to work
@@ -31,7 +34,10 @@ sudo cp $ISOLINUX_PATH isolinux
 # TODO remove this once the real stuff is working
 echo "DOING THE FILE STUFF"
 echo "talking about cats erryday"
-sudo rm ./etc/motd
+if test -f ./etc/motd; then
+  sudo rm ./etc/motd
+fi
+mkdir -p ./etc
 sudo echo "cats are amazing" > ./etc/motd
 
 # Copy all the files from ryngredients
