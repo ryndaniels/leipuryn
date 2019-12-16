@@ -18,7 +18,7 @@ const (
 )
 const (
 	// LatestImageSHA is from raspberrypi.org
-	latestImageSHA = "47ef1b2501d0e5002675a50b6868074e693f78829822eef64f3878487953234d"
+	latestImageSHA = "a50237c2f718bd8d806b96df5b9d2174ce8b789eda1f03434ed2213bbca6c6ff"
 )
 
 func main() {
@@ -63,8 +63,9 @@ func downloadImage(imageURL string) string {
 		panic(err)
 	}
 
-	if hex.EncodeToString(hasher.Sum(nil)) != latestImageSHA {
-		fmt.Println("Checksums don't match, aborting!")
+	computedSHA := hex.EncodeToString(hasher.Sum(nil))
+	if computedSHA != latestImageSHA {
+		fmt.Printf("Checksums don't match, aborting! (Got %v, expectd %s)\n", computedSHA, latestImageSHA)
 		os.Exit(2)
 	}
 
