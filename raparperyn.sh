@@ -24,7 +24,9 @@ NEWPATH="$HOME/newpi/$USER/rawpi"
 mkdir -p $NEWPATH
 cd $NEWPATH
 sudo mkdir isolinux
-sudo cp /usr/lib/syslinux/isolinux.bin isolinux
+ISOLINUX_PATH="$(sudo find / -name isolinux.bin)"
+echo "Found isolinux bin at $ISOLINUX_PATH"
+sudo cp $ISOLINUX_PATH isolinux
 
 # TODO remove this once the real stuff is working
 echo "DOING THE FILE STUFF"
