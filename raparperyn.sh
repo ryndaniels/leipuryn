@@ -17,9 +17,12 @@ mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/rawpi
 
+OLDPATH="$HOME/build/ryndaniels/ryngredients"
+NEWPATH="$HOME/newpi/$USER/rawpi"
+
 # This is necessary to get the mkisofs command to work
-# TODO use $NEWPATH here eventually
-cd $HOME/newpi/home/travis/rawpi
+mkdir -p $NEWPATH
+cd $NEWPATH
 sudo mkdir isolinux
 sudo cp /usr/lib/syslinux/isolinux.bin isolinux
 
@@ -30,9 +33,6 @@ sudo rm ./etc/motd
 sudo echo "cats are amazing" > ./etc/motd
 
 # Copy all the files from ryngredients
-OLDPATH="$HOME/build/ryndaniels/ryngredients"
-NEWPATH="$HOME/newpi/$HOME/rawpi"
-
 # TODO this hasn't been tested yet because of Computers
 function fix_perms {
   printf 'would fix perms of %s to match %s\n' "$2" "$1"
