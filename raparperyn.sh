@@ -17,7 +17,7 @@ mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/rawpi
 
-RYNGREDIENTS_PATH="$(sudo find / -name ryngredients)"
+RYNGREDIENTS_PATH="$(sudo find / -name ryngredients | head -n 1)"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
 
 OLDPATH="$RYNGREDIENTS_PATH"
