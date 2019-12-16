@@ -75,3 +75,6 @@ echo "Baking the iso now..."
 sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
 
 echo "Baked some pi successfully!"
+
+ISO_PATH="$(sudo find / -name bakedpi.iso)"
+echo "Found the pi at $ISO_PATH"
