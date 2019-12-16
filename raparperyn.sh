@@ -7,7 +7,7 @@ OFFSET="$(fdisk -l $IMG_PATH | grep img2 | awk '{ print $2 }')"
 echo "Initial offset is $OFFSET"
 SECTOR_SIZE="$(fdisk -l $IMG_PATH | grep Sector | grep -v Device | awk '{ print $4 }')"
 echo "Sector size is $SECTOR_SIZE"
-NEW_OFFSET="$((\"$OFFSET\" * \"$SECTOR_SIZE))"
+NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
 
 echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 
