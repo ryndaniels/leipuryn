@@ -4,12 +4,15 @@ set -e
 # First, find the most recent .img file, then find the offset.
 IMG_PATH="$(ls -lr *.img | head -n 1 | awk '{ print $9 }')"
 OFFSET="$(fdisk -l $IMG_PATH | grep img2 | awk '{ print $2 }')"
-SECTOR_SIZE="$(fdisk -l $IMG_PATH | grep Sector | awk '{ print $4 }')"
-NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
+echo "Initial offset is $OFFSET"
+SECTOR_SIZE="$(fdisk -l $IMG_PATH | grep Sector | grep -v Device | awk '{ print $4 }')"
+echo "Sector size is $SECTOR_SIZE"
+NEW_OFFSET="$((\"$OFFSET\" * \"$SECTOR_SIZE))"
 
 echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
+
 mkdir -p $HOME/rawpi
-mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
+sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
 mkdir -p $HOME/newpi
 sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/rawpi
