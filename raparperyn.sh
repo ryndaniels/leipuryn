@@ -78,3 +78,9 @@ echo "Baked some pi successfully!"
 
 ISO_PATH="$(sudo find / -name bakedpi.iso)"
 echo "Found the pi at $ISO_PATH"
+
+mv $ISO_PATH $RYNGREDIENTS_PATH
+echo "moved the iso"
+
+ISO_PATH="$(sudo find / -name bakedpi.iso)"
+echo "Found the pi at $ISO_PATH"
