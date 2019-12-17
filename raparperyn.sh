@@ -100,8 +100,8 @@ ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
 echo "Found the pi at $ISO_PATH"
 
 # This is where GH actions expects it to be for the artifact upload
-#cp $ISO_PATH $RYNGREDIENTS_PATH/ryngredients/bakedpi.iso
-#echo "copied the iso"
+cp $ISO_PATH $HOME/work/ryngredients/ryngredients/bakedpi.iso
+echo "copied the iso"
 
 ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
 echo "Found the pi at $ISO_PATH"
