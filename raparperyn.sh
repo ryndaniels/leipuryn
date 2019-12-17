@@ -8,23 +8,29 @@ echo "Initial offset is $OFFSET"
 SECTOR_SIZE="$(fdisk -l $IMG_PATH | grep Sector | grep -v Device | awk '{ print $4 }')"
 echo "Sector size is $SECTOR_SIZE"
 NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
-
 echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
-
-mkdir -p $HOME/rawpi
-sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $HOME/rawpi # it's RO now
-mkdir -p $HOME/newpi
-sudo tar cf - $HOME/rawpi | (cd $HOME/newpi; sudo tar xfp -)
-# The filesystem in the iso is now RW at /$HOME/newpi/rawpi
 
 RYNGREDIENTS_PATH="$(sudo find / -name ryngredients | head -n 1)"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
 
-OLDPATH="$RYNGREDIENTS_PATH"
-NEWPATH="$HOME/newpi/$USER/rawpi"
+OLD_PATH="$RYNGREDIENTS_PATH"
+#NEWPATH="$HOME/newpi/$USER/rawpi"
+NEW_PATH="$HOME/newpi"
+RAW_PATH="$HOME/rawpi"
+
+#mkdir -p $HOME/rawpi
+mkdir -p $RAW_PATH
+sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH # it's RO now
+mkdir -p $NEW_PATH
+sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
+# The filesystem in the iso is now RW at /$HOME/newpi/rawpi - ???
+
+echo "there should be a file system set up now at $NEW_PATH"
+ls $NEW_PATH
+echo "ok done echoing"
 
 # This is necessary to get the mkisofs command to work
-mkdir -p $NEWPATH
+#mkdir -p $NEWPATH
 cd $NEWPATH
 sudo mkdir isolinux
 ISOLINUX_PATH="$(sudo find / -name isolinux.bin)"
@@ -54,31 +60,34 @@ function fix_perms {
 }
 
 # TODO tomorrow - error happening with the NEWDIR sed command
-# while IFS= read -d $'\0' -r FILE ; do
-#   if [[ -d $FILE ]]; then
-#     printf 'Directory found: %s\n' "$FILE"
-#     NEWDIR=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
-#     printf 'would create new directory: %s\n' "$NEWDIR"
-#     mkdir -p $NEWDIR
-#     fix_perms $FILE $NEWDIR
-#   elif [[ -f $FILE ]]; then
-#     printf 'File found: %s\n' "$FILE"
-#     NEWFILE=$(echo "$FILE" | sed "s/${OLDPATH}/${NEWPATH}/g")
-#     printf 'would copy file from %s to %s\n' "$FILE" "$NEWFILE"
-#     cp $FILE $NEWFILE
-#     # need to get owner of old file, otherwise it'll be all root and that's bad
-#     fix_perms $FILE $NEWFILE
-#   fi
-# done < <(find $OLDPATH/* -print0)
+while IFS= read -d $'\0' -r FILE ; do
+  if [[ -d $FILE ]]; then
+    printf 'Directory found: %s\n' "$FILE"
+    NEW_DIR=$(echo "$FILE" | sed "s/${OLD_PATH}/${NEW_PATH}/g")
+    printf 'would create new directory: %s\n' "$NEW_DIR"
+    mkdir -p $NEW_DIR
+    fix_perms $FILE $NEW_DIR
+  elif [[ -f $FILE ]]; then
+    printf 'File found: %s\n' "$FILE"
+    NEW_FILE=$(echo "$FILE" | sed "s/${OLD_PATH}/${NEW_PATH}/g")
+    printf 'would copy file from %s to %s\n' "$FILE" "$NEW_FILE"
+    cp $FILE $NEW_FILE
+    # need to get owner of old file, otherwise it'll be all root and that's bad
+    fix_perms $FILE $NEWFILE
+  fi
+done < <(find $OLDPATH/* -print0)
 
 echo "Baking the iso now..."
-sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
+# TODO this should probably be an absolute path
+#sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
+sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" $NEW_PATH
 
 echo "Baked some pi successfully!"
 
 ISO_PATH="$(sudo find / -name bakedpi.iso)"
 echo "Found the pi at $ISO_PATH"
 
+# This is where GH actions expects it to be for the artifact upload
 mv $ISO_PATH $RYNGREDIENTS_PATH/ryngredients/bakedpi.iso
 echo "moved the iso"
 
