@@ -12,22 +12,17 @@ echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 
 
 #NEW_PATH="$HOME/newpi" # This is the RW directory, it is where the new image gets built from
-NEW_PATH="$HOME/newpi/$HOME/rawpi" # This is the RW directory, it is where the new image gets built from
+NEW_PATH="$HOME/newpi$HOME/rawpi" # This is the RW directory, it is where the new image gets built from
 RAW_PATH="$HOME/rawpi" # This is where the image gets mounted RO
 
 mkdir -p $RAW_PATH
 mkdir -p $NEW_PATH
-sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH # it's RO now
+sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH
 sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/$HOMErawpi - ??? no but where actually is this
 
-echo "there should be a file system set up now at $RAW_PATH"
-ls $RAW_PATH
-echo "echoing the second path"
-ls $HOME/rawpi
-echo "ok done echoing"
 
-# This is necessary to get the mkisofs command to work
+# This is necessary to get the mkisofs command to work at the end
 cd $NEW_PATH
 sudo mkdir isolinux
 ISOLINUX_PATH="$(sudo find / -name isolinux.bin)"
@@ -59,9 +54,9 @@ function fix_perms {
 # this needs to be done *from* the rawpi directory?
 # this currently finds /home/runner/work/ryngredients/ryngredients. which is *not* in rawpath?
 # and that's fine but it needs to go *into* ryngredients
-RYNGREDIENTS_PATH="$(sudo find / -name ryngredients | head -n 1)"
+RYNGREDIENTS_PATH="$(sudo find / -name ryngredients -xdev | head -n 1)"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
-cd $RYNGREDIENTS_PATH
+cd $RYNGREDIENTS_PATH/ryngredients
 while IFS= read -d $'\0' -r FILE ; do
   if [[ -d $FILE ]]; then
     printf 'Directory found: %s\n' "$FILE"
@@ -84,12 +79,12 @@ sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/bo
 
 echo "Baked some pi successfully!"
 
-ISO_PATH="$(sudo find / -name bakedpi.iso)"
+ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
 echo "Found the pi at $ISO_PATH"
 
 # This is where GH actions expects it to be for the artifact upload
 mv $ISO_PATH $RYNGREDIENTS_PATH/ryngredients/bakedpi.iso
 echo "moved the iso"
 
-ISO_PATH="$(sudo find / -name bakedpi.iso)"
+ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
 echo "Found the pi at $ISO_PATH"
