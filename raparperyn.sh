@@ -10,20 +10,20 @@ echo "Sector size is $SECTOR_SIZE"
 NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
 echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 
-RYNGREDIENTS_PATH="$(sudo find / -name ryngredients | head -n 1)"
-echo "Found ryngredients at $RYNGREDIENTS_PATH"
 
-NEW_PATH="$HOME/newpi" # This is the RW directory, it is where the new image gets built from
+#NEW_PATH="$HOME/newpi" # This is the RW directory, it is where the new image gets built from
+NEW_PATH="$HOME/newpi/$HOME/rawpi" # This is the RW directory, it is where the new image gets built from
 RAW_PATH="$HOME/rawpi" # This is where the image gets mounted RO
 
 mkdir -p $RAW_PATH
 mkdir -p $NEW_PATH
 sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH # it's RO now
 sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
-# The filesystem in the iso is now RW at /$HOME/newpi/rawpi - ??? no but where actually is this
+# The filesystem in the iso is now RW at /$HOME/newpi/$HOMErawpi - ??? no but where actually is this
 
 echo "there should be a file system set up now at $RAW_PATH"
 ls $RAW_PATH
+echo "echoing the second path"
 ls $HOME/rawpi
 echo "ok done echoing"
 
@@ -56,9 +56,12 @@ function fix_perms {
   chmod $PERMS $2
 }
 
-# TODO tomorrow - error happening with the NEWDIR sed command
 # this needs to be done *from* the rawpi directory?
-cd $RAW_PATH
+# this currently finds /home/runner/work/ryngredients/ryngredients. which is *not* in rawpath?
+# and that's fine but it needs to go *into* ryngredients
+RYNGREDIENTS_PATH="$(sudo find / -name ryngredients | head -n 1)"
+echo "Found ryngredients at $RYNGREDIENTS_PATH"
+cd $RYNGREDIENTS_PATH
 while IFS= read -d $'\0' -r FILE ; do
   if [[ -d $FILE ]]; then
     printf 'Directory found: %s\n' "$FILE"
@@ -72,13 +75,11 @@ while IFS= read -d $'\0' -r FILE ; do
     printf 'would copy file from %s to %s\n' "$FILE" "$NEW_FILE"
     cp $FILE $NEW_FILE
     # need to get owner of old file, otherwise it'll be all root and that's bad
-    fix_perms $FILE $NEWFILE
+    fix_perms $FILE $NEW_FILE
   fi
 done < <(find $RYNGREDIENTS_PATH/* -print0)
 
 echo "Baking the iso now..."
-# TODO this should probably be an absolute path
-#sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" .
 sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" $NEW_PATH
 
 echo "Baked some pi successfully!"
