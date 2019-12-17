@@ -20,8 +20,8 @@ sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH
 sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/$HOMErawpi - ??? no but where actually is this
 
-echo "here's what's at the new path $NEW_PATH/home/runner"
-ls $NEW_PATH/home/runner
+echo "here's what's at the new path $NEW_PATH/home/runner/rawpi"
+ls $NEW_PATH/home/runner/rawpi
 echo "done listing"
 
 # This is necessary to get the mkisofs command to work at the end
@@ -56,10 +56,10 @@ sudo echo "cats are amazing" > ./etc/motd
 # this needs to be done *from* the rawpi directory?
 # this currently finds /home/runner/work/ryngredients/ryngredients. which is *not* in rawpath?
 # and that's fine but it needs to go *into* ryngredients
-RYNGREDIENTS_PATH="$(sudo find / -path '*ryngredients/files' -xdev)"
+RYNGREDIENTS_PATH="$(sudo find /  -xdev -path '*ryngredients/files')"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
 
-RPATH="$(sudo find / -name cats.txt -xdev)"
+RPATH="$(sudo find / -xdev -name cats.txt)"
 echo "found rpath $RPATH"
 
 echo "WHATS IN HERE"
