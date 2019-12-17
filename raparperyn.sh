@@ -56,7 +56,17 @@ function fix_perms {
 # and that's fine but it needs to go *into* ryngredients
 RYNGREDIENTS_PATH="$(sudo find / -name ryngredients -xdev | head -n 1)"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
-cd $RYNGREDIENTS_PATH/ryngredients
+
+echo "WHATS IN HERE"
+ls $RYNGREDIENTS_PATH
+
+echo "going deeper"
+RYNGREDIENTS_PATH=$RYNGREDIENTS_PATH/ryngredients
+
+echo "WHATS IN HERE NOW"
+ls $RYNGREDIENTS_PATH
+
+cd $RYNGREDIENTS_PATH
 while IFS= read -d $'\0' -r FILE ; do
   if [[ -d $FILE ]]; then
     printf 'Directory found: %s\n' "$FILE"
@@ -83,8 +93,16 @@ ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
 echo "Found the pi at $ISO_PATH"
 
 # This is where GH actions expects it to be for the artifact upload
-mv $ISO_PATH $RYNGREDIENTS_PATH/ryngredients/bakedpi.iso
-echo "moved the iso"
+cp $ISO_PATH $RYNGREDIENTS_PATH/ryngredients/bakedpi.iso
+echo "copied the iso"
 
 ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
 echo "Found the pi at $ISO_PATH"
+
+echo "maybe CD to home? i got nothing"
+cd $HOME
+
+echo "is there a pi here"
+ls
+
+echo "ok done"
