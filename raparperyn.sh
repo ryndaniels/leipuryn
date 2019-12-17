@@ -10,10 +10,10 @@ echo "Sector size is $SECTOR_SIZE"
 NEW_OFFSET="$(($OFFSET * $SECTOR_SIZE))"
 echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 
-
-#NEW_PATH="$HOME/newpi" # This is the RW directory, it is where the new image gets built from
-NEW_PATH="$HOME/newpi$HOME/rawpi" # This is the RW directory, it is where the new image gets built from
 RAW_PATH="$HOME/rawpi" # This is where the image gets mounted RO
+NEW_PATH="$HOME/newpi" # This is the RW directory, it is where the new image gets built from
+#NEW_PATH="$HOME/newpi$HOME/rawpi" # This is the RW directory, it is where the new image gets built from
+
 
 mkdir -p $RAW_PATH
 mkdir -p $NEW_PATH
@@ -21,10 +21,9 @@ sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH
 sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/$HOMErawpi - ??? no but where actually is this
 
-echo "here's what's at the new path $NEW_PATH"
-ls $NEW_PATH
+echo "here's what's at the new path $NEW_PATH/home"
+ls $NEW_PATH/home
 echo "done listing"
-
 
 # This is necessary to get the mkisofs command to work at the end
 cd $NEW_PATH
@@ -58,17 +57,11 @@ sudo echo "cats are amazing" > ./etc/motd
 # this needs to be done *from* the rawpi directory?
 # this currently finds /home/runner/work/ryngredients/ryngredients. which is *not* in rawpath?
 # and that's fine but it needs to go *into* ryngredients
-RYNGREDIENTS_PATH="$(sudo find / -name ryngredients -xdev | head -n 1)"
+RYNGREDIENTS_PATH="$(sudo find / -path '*ryngredients/files' -xdev)"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
 
 echo "WHATS IN HERE"
-ls $RYNGREDIENTS_PATH
-
-echo "going deeper"
-RYNGREDIENTS_PATH=$RYNGREDIENTS_PATH/ryngredients
-
-echo "WHATS IN HERE NOW"
-ls $RYNGREDIENTS_PATH
+ls -al $RYNGREDIENTS_PATH
 echo "done"
 
 # cd $RYNGREDIENTS_PATH
