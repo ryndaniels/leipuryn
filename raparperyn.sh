@@ -12,17 +12,13 @@ echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 
 RAW_PATH="$HOME/rawpi" # This is where the image gets mounted RO
 NEW_PATH="$HOME/newpi" # This is the RW directory, it is where the new image gets built from
-#NEW_PATH="$HOME/newpi$HOME/rawpi" # This is the RW directory, it is where the new image gets built from
 
 mkdir -p $RAW_PATH
 mkdir -p $NEW_PATH
 sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH
 sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
-# The filesystem in the iso is now RW at /$HOME/newpi/$HOMErawpi - ??? no but where actually is this
+# The filesystem in the iso is now RW at /$HOME/newpi/$HOMErawpi. Yes, really.
 
-echo "here's what's at the new path $NEW_PATH/home/runner/rawpi"
-ls $NEW_PATH/home/runner/rawpi
-echo "done listing"
 NEW_PATH=$NEW_PATH/home/runner/rawpi
 
 # This is necessary to get the mkisofs command to work at the end
@@ -32,64 +28,13 @@ ISOLINUX_PATH="$(sudo find / -name isolinux.bin)"
 echo "Found isolinux bin at $ISOLINUX_PATH"
 sudo cp $ISOLINUX_PATH isolinux
 
-# TODO remove this once the real stuff is working
-# echo "DOING THE FILE STUFF"
-# echo "talking about cats erryday"
-# if test -f ./etc/motd; then
-#   sudo rm ./etc/motd
-# fi
-# mkdir -p ./etc
-# sudo echo "cats are amazing" > ./etc/motd
-
-# Copy all the files from ryngredients
-# TODO this hasn't been tested yet because of Computers
-# function fix_perms {
-#   printf 'would fix perms of %s to match %s\n' "$2" "$1"
-#   # old file is $1, new file is $2
-#   OWNER=$(stat -c '%U' $1)
-#   GROUP=$(stat -c '%G' $1)
-#   PERMS=$(stat -c '%a' $1)
-#   printf 'new file %s should have owner %s group %s perms %s\n' "$2" "$OWNER" "$GROUP" "$PERMS"
-#   chown $OWNER:$GROUP $2
-#   chmod $PERMS $2
-# }
-
-# this needs to be done *from* the rawpi directory?
-# this currently finds /home/runner/work/ryngredients/ryngredients. which is *not* in rawpath?
-# and that's fine but it needs to go *into* ryngredients
 RYNGREDIENTS_PATH="$(sudo find /  -xdev -path '*ryngredients/files')"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
 
-RPATH="$(sudo find / -xdev -name cats.txt)"
-echo "found rpath $RPATH"
-
-echo "WHATS IN HERE"
-ls -al $RYNGREDIENTS_PATH
-echo "done"
-
-# cd $RYNGREDIENTS_PATH
-# while IFS= read -d $'\0' -r FILE ; do
-#   if [[ -d $FILE ]]; then
-#     printf 'Directory found: %s\n' "$FILE"
-#     NEW_DIR=$(echo "$FILE" | sed "s@${RYNGREDIENTS_PATH}@${NEW_PATH}@g")
-#     printf 'would create new directory: %s\n' "$NEW_DIR"
-#     mkdir -p $NEW_DIR
-#     fix_perms $FILE $NEW_DIR
-#   elif [[ -f $FILE ]]; then
-#     printf 'File found: %s\n' "$FILE"
-#     NEW_FILE=$(echo "$FILE" | sed "s@${RYNGREDIENTS_PATH}@${NEW_PATH}@g")
-#     printf 'would copy file from %s to %s\n' "$FILE" "$NEW_FILE"
-#     cp $FILE $NEW_FILE
-#     # need to get owner of old file, otherwise it'll be all root and that's bad
-#     fix_perms $FILE $NEW_FILE
-#   fi
-# done < <(find $RYNGREDIENTS_PATH/* -print0)
-
-echo "trying this with rsync"
+echo "Rsyncing the ryngredients..."
 sudo rsync -a $RYNGREDIENTS_PATH/ $NEW_PATH/
 
 cd $RYNGREDIENTS_PATH
-touch coolcatfile
 
 echo "Baking the iso now..."
 sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" $NEW_PATH
@@ -100,16 +45,7 @@ ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
 echo "Found the pi at $ISO_PATH"
 
 # This is where GH actions expects it to be for the artifact upload
+echo "Copying the iso to where Actions wants it to be..."
 cp $ISO_PATH $HOME/work/ryngredients/ryngredients/bakedpi.iso
-echo "copied the iso"
-
-ISO_PATH="$(sudo find / -name bakedpi.iso -xdev)"
-echo "Found the pi at $ISO_PATH"
-
-echo "maybe CD to home? i got nothing"
 cd $HOME
-
-echo "is there a pi here"
-ls
-
-echo "ok done"
+echo "Congration we did it."
