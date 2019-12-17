@@ -23,6 +23,7 @@ sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
 echo "here's what's at the new path $NEW_PATH/home/runner/rawpi"
 ls $NEW_PATH/home/runner/rawpi
 echo "done listing"
+NEW_PATH=$NEW_PATH/home/runner/rawpi
 
 # This is necessary to get the mkisofs command to work at the end
 cd $NEW_PATH
@@ -32,13 +33,13 @@ echo "Found isolinux bin at $ISOLINUX_PATH"
 sudo cp $ISOLINUX_PATH isolinux
 
 # TODO remove this once the real stuff is working
-echo "DOING THE FILE STUFF"
-echo "talking about cats erryday"
-if test -f ./etc/motd; then
-  sudo rm ./etc/motd
-fi
-mkdir -p ./etc
-sudo echo "cats are amazing" > ./etc/motd
+# echo "DOING THE FILE STUFF"
+# echo "talking about cats erryday"
+# if test -f ./etc/motd; then
+#   sudo rm ./etc/motd
+# fi
+# mkdir -p ./etc
+# sudo echo "cats are amazing" > ./etc/motd
 
 # Copy all the files from ryngredients
 # TODO this hasn't been tested yet because of Computers
@@ -85,7 +86,10 @@ echo "done"
 # done < <(find $RYNGREDIENTS_PATH/* -print0)
 
 echo "trying this with rsync"
-sudo rsync -a $RYNGREDIENTS_PATH/files/ $NEW_PATH/
+sudo rsync -a $RYNGREDIENTS_PATH/ $NEW_PATH/
+
+cd $RYNGREDIENTS_PATH
+touch coolcatfile
 
 echo "Baking the iso now..."
 sudo mkisofs -quiet -o $HOME/bakedpi.iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V "Homemade Rhubarb Pie" $NEW_PATH
