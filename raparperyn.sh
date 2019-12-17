@@ -26,7 +26,7 @@ sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
 # The filesystem in the iso is now RW at /$HOME/newpi/rawpi - ???
 
 echo "there should be a file system set up now at $NEW_PATH"
-ls $NEW_PATH
+ls $NEW_PATH/home
 echo "ok done echoing"
 
 # This is necessary to get the mkisofs command to work
@@ -63,13 +63,13 @@ function fix_perms {
 while IFS= read -d $'\0' -r FILE ; do
   if [[ -d $FILE ]]; then
     printf 'Directory found: %s\n' "$FILE"
-    NEW_DIR=$(echo "$FILE" | sed "s/${OLD_PATH}/${NEW_PATH}/g")
+    NEW_DIR=$(echo "$FILE" | sed "s@${OLD_PATH}@${NEW_PATH}@g")
     printf 'would create new directory: %s\n' "$NEW_DIR"
     mkdir -p $NEW_DIR
     fix_perms $FILE $NEW_DIR
   elif [[ -f $FILE ]]; then
     printf 'File found: %s\n' "$FILE"
-    NEW_FILE=$(echo "$FILE" | sed "s/${OLD_PATH}/${NEW_PATH}/g")
+    NEW_FILE=$(echo "$FILE" | sed "s@${OLD_PATH}@${NEW_PATH}@g")
     printf 'would copy file from %s to %s\n' "$FILE" "$NEW_FILE"
     cp $FILE $NEW_FILE
     # need to get owner of old file, otherwise it'll be all root and that's bad
