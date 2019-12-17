@@ -13,25 +13,22 @@ echo "Going to mount $IMG_PATH with offset $NEW_OFFSET"
 RYNGREDIENTS_PATH="$(sudo find / -name ryngredients | head -n 1)"
 echo "Found ryngredients at $RYNGREDIENTS_PATH"
 
-OLD_PATH="$RYNGREDIENTS_PATH"
-#NEWPATH="$HOME/newpi/$USER/rawpi"
-NEW_PATH="$HOME/newpi"
-RAW_PATH="$HOME/rawpi"
+NEW_PATH="$HOME/newpi" # This is the RW directory, it is where the new image gets built from
+RAW_PATH="$HOME/rawpi" # This is where the image gets mounted RO
 
-#mkdir -p $HOME/rawpi
 mkdir -p $RAW_PATH
-sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH # it's RO now
 mkdir -p $NEW_PATH
+sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH # it's RO now
 sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
-# The filesystem in the iso is now RW at /$HOME/newpi/rawpi - ???
+# The filesystem in the iso is now RW at /$HOME/newpi/rawpi - ??? no but where actually is this
 
-echo "there should be a file system set up now at $NEW_PATH"
-ls $NEW_PATH/home
+echo "there should be a file system set up now at $RAW_PATH"
+ls $RAW_PATH
+ls $HOME/rawpi
 echo "ok done echoing"
 
 # This is necessary to get the mkisofs command to work
-#mkdir -p $NEWPATH
-cd $NEWPATH
+cd $NEW_PATH
 sudo mkdir isolinux
 ISOLINUX_PATH="$(sudo find / -name isolinux.bin)"
 echo "Found isolinux bin at $ISOLINUX_PATH"
@@ -60,22 +57,24 @@ function fix_perms {
 }
 
 # TODO tomorrow - error happening with the NEWDIR sed command
+# this needs to be done *from* the rawpi directory?
+cd $RAW_PATH
 while IFS= read -d $'\0' -r FILE ; do
   if [[ -d $FILE ]]; then
     printf 'Directory found: %s\n' "$FILE"
-    NEW_DIR=$(echo "$FILE" | sed "s@${OLD_PATH}@${NEW_PATH}@g")
+    NEW_DIR=$(echo "$FILE" | sed "s@${RYNGREDIENTS_PATH}@${NEW_PATH}@g")
     printf 'would create new directory: %s\n' "$NEW_DIR"
     mkdir -p $NEW_DIR
     fix_perms $FILE $NEW_DIR
   elif [[ -f $FILE ]]; then
     printf 'File found: %s\n' "$FILE"
-    NEW_FILE=$(echo "$FILE" | sed "s@${OLD_PATH}@${NEW_PATH}@g")
+    NEW_FILE=$(echo "$FILE" | sed "s@${RYNGREDIENTS_PATH}@${NEW_PATH}@g")
     printf 'would copy file from %s to %s\n' "$FILE" "$NEW_FILE"
     cp $FILE $NEW_FILE
     # need to get owner of old file, otherwise it'll be all root and that's bad
     fix_perms $FILE $NEWFILE
   fi
-done < <(find $OLDPATH/* -print0)
+done < <(find $RYNGREDIENTS_PATH/* -print0)
 
 echo "Baking the iso now..."
 # TODO this should probably be an absolute path
