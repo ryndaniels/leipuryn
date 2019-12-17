@@ -1,7 +1,6 @@
 *
 !*.go
 !*.md
-!.travis.yml
 !*/
 
 # Binaries for programs and plugins

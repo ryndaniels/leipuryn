@@ -31,4 +31,4 @@ but, unless you have a repository full of ryngredients that contain organized fi
 
 ### Can you stop with the puns?
 
-I absolutely can and will not.
+I absolutely can not and will not.

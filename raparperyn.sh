@@ -17,8 +17,7 @@ mkdir -p $RAW_PATH
 mkdir -p $NEW_PATH
 sudo mount -o loop,offset=$NEW_OFFSET $IMG_PATH $RAW_PATH
 sudo tar cf - $RAW_PATH | (cd $NEW_PATH; sudo tar xfp -)
-# The filesystem in the iso is now RW at /$HOME/newpi/$HOMErawpi. Yes, really.
-
+# The filesystem in the iso is now RW at /$HOME/newpi/$HOME/rawpi. Yes, really.
 NEW_PATH=$NEW_PATH/home/runner/rawpi
 
 # This is necessary to get the mkisofs command to work at the end
